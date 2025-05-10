@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rust Image Editor</title>
+    <style>
+
+        body {
+            height: 100vh;
+            margin: 0;
+            font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+        }
+
+        .image-wrapper {
+            position: relative;
+            width: fit-content;
+            height: fit-content;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: calc(100% - 250px) !important;
+        }
+
+        #image,
+        #reference-image {
+            width: 500px;
+            object-fit: cover;
+            border-radius: 10px;
+            display: none;
+        }
+
+        #bottom-nav {
+            position: absolute;
+            bottom: 0;
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            background-color: #f0f0f0;
+            padding: 10px;
+        }
+
+        #action-wrapper {
+            position: absolute;
+            left: 10;
+            display: flex;
+            flex-direction: column;
+            margin: 10px;
+            width: 100%;
+            gap: 5px;
+        }
+
+        .target-nav {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .target-nav.active {
+            display: flex;
+        }
+
+        .nav-item {
+            cursor: pointer;
+            padding: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin: 5px;
+        }
+
+        .nav-item.active {
+
+            background-color: #d0d0d0;
+        }
+
+        #action-crop-wrapper,
+        #action-adjust-wrapper,
+        #action-filter-wrapper {
+            flex-direction: column;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="image-wrapper" class="image-wrapper">
+        <img id="image">
+        <label class="label-center" for="file-input">
+            Lets Edit 
+            <input style="display: none;" type="file" id="file-input" accept="image/*">
+        </label>
+        <div id="crop-area"></div>
+    </div>
+
+    <div id="action-wrapper">
+        
+        <div class="target-nav" id="action-adjust-wrapper">
+        </div>
+
+        <div class="target-nav" id="action-crop-wrapper">
+            <label for="scale">Scale:</label>
+            <select id="scale-option">
+                <option value="1">1x</option>
+                <option value="2">2x</option>
+                <option value="3">3x</option>
+            </select>
+            <label for="width">Width</label>
+            <input placeholder="..." type="text" id="width">
+            <label for="height">Height</label>
+            <input placeholder="..." type="text" id="height">
+        </div>
+
+        <div class="target-nav" id="action-filter-wrapper">
+            <label for="reference">
+                <input type="file" id="reference" accept="image/*">
+            </label>
+            <img src="" alt="" id="reference-image">
+            <button id="switch-btn">Switch</button>
+        </div>
+
+        <div class="target-nav" id="action-enhance-wrapper">
+            <label for="enhance">Enhance</label>
+            <button id="btn-enhance">Enhance</button>
+        </div>
+
+        <!-- <div class="action-wrapper">
+            <label for="">Crop</label>
+            <button id="btn-crop">Crop</button>
+            <button id="btn-confirm-crop">Confirm</button>
+        </div> -->
+
+    </div>
+
+    <div id="bottom-nav">
+        <div class="nav-item" id="adjust-nav">Adjust</div>
+        <div class="nav-item" id="crop-nav">Crop & Resize</div>
+        <div class="nav-item" id="filter-nav">Filter</div>
+        <div class="nav-item" id="enhance-nav">Enhance</div>
+    </div>
+
+    <script type="module" src="index.js"></script>
+    <script src="navigation.js"></script>
+</body>
+</html>

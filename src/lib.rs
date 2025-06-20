@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::*;
 use std::io::Cursor;
-use image::{ImageBuffer, Rgb};
+use image::{GenericImageView, ImageBuffer, Rgb};
 
 #[wasm_bindgen]
 pub fn resize(image_data: &[u8], height: u32, width: u32) -> Vec<u8> {
@@ -12,7 +12,7 @@ pub fn resize(image_data: &[u8], height: u32, width: u32) -> Vec<u8> {
 }
 
 #[wasm_bindgen]
-pub fn resize_exact(image_data: &[u8], height: u32, width: u32) -> Vec<u8> {
+pub fn resize_exact(image_data: &[u8], width: u32, height: u32) -> Vec<u8> {
     let image = image::load_from_memory(image_data).expect("Failed to open the file");
     let resized_image = image.resize_exact(width, height, image::imageops::FilterType::Lanczos3);
     let mut buf = Cursor::new(Vec::new());
@@ -21,21 +21,12 @@ pub fn resize_exact(image_data: &[u8], height: u32, width: u32) -> Vec<u8> {
 }
 
 #[wasm_bindgen]
-pub fn resize_one_side(image_data: &[u8], key: &str, leng: u32) -> Vec<u8> {
+pub fn resize_one_side(image_data: &[u8], width: u32, height: u32) -> Vec<u8> {
     let image = image::load_from_memory(image_data).expect("Failed to open the file");
-    if key == "width" {
-        let height = image.height();
-        let resized_image = image.resize(leng, height, image::imageops::FilterType::Lanczos3);
-        let mut buf = Cursor::new(Vec::new());
-        resized_image.write_to(&mut buf, image::ImageFormat::Png).expect("Failed to write the image");
-        return buf.into_inner();
-    } else {
-        let width = image.width();
-        let resized_image = image.resize(width, leng, image::imageops::FilterType::Lanczos3);
-        let mut buf = Cursor::new(Vec::new());
-        resized_image.write_to(&mut buf, image::ImageFormat::Png).expect("Failed to write the image");
-        return buf.into_inner();
-    }
+    let resized_image = image.resize_exact(width, height, image::imageops::FilterType::Lanczos3);
+    let mut buf = Cursor::new(Vec::new());
+    resized_image.write_to(&mut buf, image::ImageFormat::Png).expect("Failed to write the image");
+    return buf.into_inner();
 }
 
 #[wasm_bindgen]
@@ -61,8 +52,8 @@ pub fn change_scale_image(image_data: &[u8], scale: f32) -> Vec<u8> {
 #[wasm_bindgen]
 pub fn get_size(image_data: &[u8]) -> Vec<u32> {
     let image = image::load_from_memory(image_data).expect("Failed to open the file");
-    let width = image.width();
-    let height = image.height();
+    // let image = image::load_from_memory(fix_size_image(image_data).as_slice()).expect("Failed to open the file");
+    let (width, height) = image.dimensions();
     return vec![width, height];
 }
 
@@ -280,4 +271,99 @@ fn rgb_to_lab(image: &ImageBuffer<Rgb<u8>, Vec<u8>>) -> Vec<[f64; 3]> {
     }
 
     lab_image
+}
+
+#[wasm_bindgen]
+pub fn blur(image_data: &[u8], radius: f32) -> Vec<u8> {
+    let image = image::load_from_memory(image_data).expect("Failed to open the file");
+    // let image = image::load_from_memory(fix_size_image(image_data).as_slice()).expect("Failed to open the file");
+    let blurred_image = image.blur(radius);
+    let mut buf = Cursor::new(Vec::new());
+    blurred_image.write_to(&mut buf, image::ImageFormat::Png).expect("Failed to write the image");
+    buf.into_inner()
+}
+
+#[wasm_bindgen]
+pub fn sharpen(image_data: &[u8], radius: f32) -> Vec<u8> {
+    let image = image::load_from_memory(image_data).expect("Failed to open the file");
+    let sharpened_image = image.unsharpen(radius, 1);
+    let mut buf = Cursor::new(Vec::new());
+    sharpened_image.write_to(&mut buf, image::ImageFormat::Png).expect("Failed to write the image");
+    buf.into_inner()
+}
+
+#[wasm_bindgen]
+pub fn fix_size_image(image_data: &[u8]) -> Vec<u8> {
+    let image = image::load_from_memory(image_data).expect("Failed to open the file");
+    let (width, height) = image.dimensions();
+    if width > 1267 {
+        let resize_image = image.resize(1267, height, image::imageops::FilterType::Lanczos3);
+        let mut buf = Cursor::new(Vec::new());
+        resize_image.write_to(&mut buf, image::ImageFormat::Png).expect("Failed to write the image");
+        buf.into_inner()
+    } else if height > 1267 {
+        let resize_image = image.resize(width, 1267, image::imageops::FilterType::Lanczos3);
+        let mut buf = Cursor::new(Vec::new());
+        resize_image.write_to(&mut buf, image::ImageFormat::Png).expect("Failed to write the image");
+        buf.into_inner()
+    } else {
+        let mut buf = Cursor::new(Vec::new());
+        image.write_to(&mut buf, image::ImageFormat::Png).expect("Failed to write the image");
+        buf.into_inner()
+    }
+}
+
+struct ColorItem {
+    rgb: [u8; 3],
+    qty: u32,
+}
+
+struct ImageColorPallete {
+    gray: Vec<u8>,
+    colors: Vec<ColorItem>,
+}
+
+#[wasm_bindgen]
+pub fn coloring_grayscale(image_source: &[u8], image_reference: &[u8]) {
+    let source_image = image::load_from_memory(image_source).expect("Failed to open the file");
+    let source_gray = source_image.to_luma8();
+    // let reference_image = ImageReader::open("src/blade-runner2.png")?.decode()?;
+    let reference_image = image::load_from_memory(image_reference).expect("Failed to open the file");
+    let reference_gray = reference_image.to_luma8();
+    let reference_rgb = reference_image.to_rgb8();
+
+    let mut reference_colors = ImageColorPallete {
+        gray: vec![],
+        colors: vec![],
+    };
+
+    for (x, y, pixel) in reference_rgb.enumerate_pixels() {
+        let r = pixel[0];
+        let g = pixel[1];
+        let b = pixel[2];
+        let gray = reference_gray.get_pixel(x, y).0[0];
+        reference_colors.gray.push(gray);
+        let mut found = false;
+        for color in reference_colors.colors.iter_mut() {
+            if color.rgb[0] == r && color.rgb[1] == g && color.rgb[2] == b {
+                color.qty += 1;
+                found = true;
+                break;
+            }
+        }
+        if !found {
+            reference_colors.colors.push(ColorItem {
+                rgb: [r, g, b],
+                qty: 1,
+            });
+        }
+    }
+
+    for gray in reference_colors.gray.iter_mut() {
+        reference_colors.colors.sort_by(|a, b| b.qty.cmp(&a.qty));
+    }
+
+    let mut new_image: image::RgbImage = ImageBuffer::new(source_gray.width(), source_gray.height());
+
+    
 }

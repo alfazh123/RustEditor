@@ -1,6 +1,7 @@
 use wasm_bindgen::prelude::*;
-use std::io::Cursor;
+use std::{io::Cursor};
 use image::{GenericImageView, ImageBuffer, Rgb};
+use colors_transform::{Rgb as ColorTransformRgb, Hsl, Color}; // Import trait ColorTransform
 
 #[wasm_bindgen]
 pub fn resize(image_data: &[u8], height: u32, width: u32) -> Vec<u8> {
@@ -313,57 +314,48 @@ pub fn fix_size_image(image_data: &[u8]) -> Vec<u8> {
     }
 }
 
-struct ColorItem {
-    rgb: [u8; 3],
-    qty: u32,
-}
-
-struct ImageColorPallete {
-    gray: Vec<u8>,
-    colors: Vec<ColorItem>,
+#[wasm_bindgen]
+pub fn grayscale_image(image_data: &[u8]) -> Vec<u8> {
+    let image = image::load_from_memory(image_data).expect("Failed to open the file");
+    let gray_image = image.to_luma8();
+    let mut buf = Cursor::new(Vec::new());
+    gray_image.write_to(&mut buf, image::ImageFormat::Png).expect("Failed to write the image");
+    buf.into_inner()
 }
 
 #[wasm_bindgen]
-pub fn coloring_grayscale(image_source: &[u8], image_reference: &[u8]) {
-    let source_image = image::load_from_memory(image_source).expect("Failed to open the file");
-    let source_gray = source_image.to_luma8();
-    // let reference_image = ImageReader::open("src/blade-runner2.png")?.decode()?;
-    let reference_image = image::load_from_memory(image_reference).expect("Failed to open the file");
-    let reference_gray = reference_image.to_luma8();
-    let reference_rgb = reference_image.to_rgb8();
+pub fn adjust_saturation_image(image_data: &[u8], saturation: f32) -> Vec<u8> {
+    let image = image::load_from_memory(image_data).expect("Failed to open the file");
+    let rgb_image = image.to_rgb8();
+    let (width, height) = rgb_image.dimensions();
+    let mut adjusted_image: ImageBuffer<Rgb<u8>, Vec<u8>> = ImageBuffer::new(width, height);
 
-    let mut reference_colors = ImageColorPallete {
-        gray: vec![],
-        colors: vec![],
-    };
-
-    for (x, y, pixel) in reference_rgb.enumerate_pixels() {
-        let r = pixel[0];
-        let g = pixel[1];
-        let b = pixel[2];
-        let gray = reference_gray.get_pixel(x, y).0[0];
-        reference_colors.gray.push(gray);
-        let mut found = false;
-        for color in reference_colors.colors.iter_mut() {
-            if color.rgb[0] == r && color.rgb[1] == g && color.rgb[2] == b {
-                color.qty += 1;
-                found = true;
-                break;
-            }
-        }
-        if !found {
-            reference_colors.colors.push(ColorItem {
-                rgb: [r, g, b],
-                qty: 1,
-            });
-        }
+    for (x, y, pixel) in rgb_image.enumerate_pixels() {
+        let adjusted_pixel = adjust_saturation(*pixel, saturation);
+        adjusted_image.put_pixel(x, y, adjusted_pixel);
     }
 
-    for gray in reference_colors.gray.iter_mut() {
-        reference_colors.colors.sort_by(|a, b| b.qty.cmp(&a.qty));
-    }
+    let mut buf = Cursor::new(Vec::new());
+    adjusted_image.write_to(&mut buf, image::ImageFormat::Png).expect("Failed to write the image");
+    buf.into_inner()
+}
 
-    let mut new_image: image::RgbImage = ImageBuffer::new(source_gray.width(), source_gray.height());
-
-    
+fn adjust_saturation(
+    pixel: Rgb<u8>,
+    saturation_factor: f32,
+) -> Rgb<u8> {
+    let rgb = ColorTransformRgb::from(pixel[0] as f32, pixel[1] as f32, pixel[2] as f32);
+    let hsl = rgb.to_hsl();
+    println!("HSL: {:?}", hsl.get_saturation());
+    let adjusted_hsl = Hsl::from(hsl.get_hue(), hsl.get_saturation() + saturation_factor, hsl.get_lightness());
+    //     h: hsl.h,
+    //     s: (hsl.s * saturation_factor).clamp(0.0, 1.0), // Adjust saturation
+    //     l: hsl.l,
+    // };
+    let adjusted_rgb = adjusted_hsl.to_rgb();
+    Rgb([
+        adjusted_rgb.get_red() as u8,
+        adjusted_rgb.get_green() as u8,
+        adjusted_rgb.get_blue() as u8,
+    ])
 }

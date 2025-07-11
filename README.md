@@ -1,1 +1,1 @@
-# RustEditor
+# rust-img-editor

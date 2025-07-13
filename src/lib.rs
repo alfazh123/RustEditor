@@ -70,8 +70,8 @@ pub fn switch_color(image_source: &[u8], image_reference: &[u8]) -> Vec<u8> {
     let reference_rgb = reference_image.to_rgb8();
     let (width, height) = source_rgb.dimensions();
 
-    let source_lab = rgb_to_lab(&source_rgb);
-    let reference_lab = rgb_to_lab(&reference_rgb);
+    let source_lab = image_rgb_to_lab(&source_rgb);
+    let reference_lab = image_rgb_to_lab(&reference_rgb);
 
     let source_stats = image_stats(&source_lab);
     let reference_stats = image_stats(&reference_lab);
@@ -202,76 +202,81 @@ fn lab_to_rgb(lab: [f64; 3]) -> [u8; 3] {
 
 }
 
-fn rgb_to_lab(image: &ImageBuffer<Rgb<u8>, Vec<u8>>) -> Vec<[f64; 3]> {
+fn image_rgb_to_lab(image: &ImageBuffer<Rgb<u8>, Vec<u8>>) -> Vec<[f64; 3]> {
     let mut lab_image = Vec::with_capacity(image.pixels().count());
 
     for pixel in image.pixels() {
-        let r = pixel[0] as f64 /255.0;
-        let g = pixel[1] as f64 /255.0;
-        let b = pixel[2] as f64 /255.0;
-
-        let r_linear = if r > 0.040450 {
-            ((r + 0.055) / 1.055).powf(2.4)
-        } else {
-            r / 12.92
-        };
-
-        let g_linear = if g > 0.040450 {
-            ((g + 0.055) / 1.055).powf(2.4)
-        } else {
-            g / 12.92
-        };
-
-        let b_linear = if b > 0.040450 {
-            ((b + 0.055) / 1.055).powf(2.4)
-        } else {
-            b / 12.92
-        };
-
-        let x = r_linear * 0.4124564 + g_linear * 0.3575761 + b_linear * 0.1804375;
-        let y = r_linear * 0.2126729 + g_linear * 0.7151522 + b_linear * 0.0721750;
-        let z = r_linear * 0.0193339 + g_linear * 0.1191920 + b_linear * 0.9503041;
-
-        // Reference white point D65 (0.95046, 1.0, 1.08906).
-        let x = x / 0.95047;
-        let y = y / 1.00000;
-        let z = z / 1.08883;
-
-        // 0.576669  0.185558  0.188229
-        // 0.297345  0.627364  0.075291
-        // 0.027031  0.070689  0.991338
-
-        let fx = if x > 0.008856 {
-            (x).powf(1.0 / 3.0)
-        } else {
-            x * 7.787 + 16.0 / 116.0
-        };
-        let fy = if y > 0.008856 {
-            (y).powf(1.0 / 3.0)
-        } else {
-            y * 7.787 + 16.0 / 116.0
-        };
-
-        let fz = if z > 0.008856 {
-            (z).powf(1.0 / 3.0)
-        } else {
-            z * 7.787 + 16.0 / 116.0
-        };
-
-        let l = 116.0 * fy - 16.0;
-        let a = 500.0 * (fx - fy);
-        let b = 200.0 * (fy - fz);
-
-        let lab = [
-            l,
-            a,
-            b,
-        ];
+        let lab = rgb_to_lab(*pixel);
 
         lab_image.push(lab);
     }
 
     lab_image
+}
+
+fn rgb_to_lab(pixel: Rgb<u8>) -> [f64; 3] {
+    let r = pixel[0] as f64 /255.0;
+    let g = pixel[1] as f64 /255.0;
+    let b = pixel[2] as f64 /255.0;
+    
+    let r_linear = if r > 0.040450 {
+        ((r + 0.055) / 1.055).powf(2.4)
+    } else {
+        r / 12.92
+    };
+    
+    let g_linear = if g > 0.040450 {
+        ((g + 0.055) / 1.055).powf(2.4)
+    } else {
+        g / 12.92
+    };
+    
+    let b_linear = if b > 0.040450 {
+        ((b + 0.055) / 1.055).powf(2.4)
+    } else {
+        b / 12.92
+    };
+    
+    let x = r_linear * 0.4124564 + g_linear * 0.3575761 + b_linear * 0.1804375;
+    let y = r_linear * 0.2126729 + g_linear * 0.7151522 + b_linear * 0.0721750;
+    let z = r_linear * 0.0193339 + g_linear * 0.1191920 + b_linear * 0.9503041;
+    
+    // Reference white point D65 (0.95046, 1.0, 1.08906).
+    let x = x / 0.95047;
+    let y = y / 1.00000;
+    let z = z / 1.08883;
+    
+    // 0.576669  0.185558  0.188229
+    // 0.297345  0.627364  0.075291
+    // 0.027031  0.070689  0.991338
+    
+    let fx = if x > 0.008856 {
+        (x).powf(1.0 / 3.0)
+    } else {
+        x * 7.787 + 16.0 / 116.0
+    };
+    let fy = if y > 0.008856 {
+        (y).powf(1.0 / 3.0)
+    } else {
+        y * 7.787 + 16.0 / 116.0
+    };
+    
+    let fz = if z > 0.008856 {
+        (z).powf(1.0 / 3.0)
+    } else {
+        z * 7.787 + 16.0 / 116.0
+    };
+    
+    let l = 116.0 * fy - 16.0;
+    let a = 500.0 * (fx - fy);
+    let b = 200.0 * (fy - fz);
+    
+    let lab = [
+        l,
+        a,
+        b,
+    ];
+    lab
 }
 
 #[wasm_bindgen]
@@ -330,8 +335,26 @@ pub fn adjust_saturation_image(image_data: &[u8], saturation: f32) -> Vec<u8> {
     let (width, height) = rgb_image.dimensions();
     let mut adjusted_image: ImageBuffer<Rgb<u8>, Vec<u8>> = ImageBuffer::new(width, height);
 
+    let saturation_value: f32;
+
+    if saturation > 0.0 {
+        if saturation > 6.0 {
+            saturation_value = 1.0 + (6.0/6.0);
+        } else {
+            saturation_value = 1.0 + (saturation/6.0);
+        }
+    } else if saturation == 0.0 {
+        saturation_value = 1.0;
+    } else {
+        if saturation < -6.0 {
+            saturation_value = 0.0;
+        } else {
+            saturation_value = (saturation + 6.0) / 6.0;
+        }
+    }
+
     for (x, y, pixel) in rgb_image.enumerate_pixels() {
-        let adjusted_pixel = adjust_saturation(*pixel, saturation);
+        let adjusted_pixel = adjust_saturation(*pixel, saturation_value);
         adjusted_image.put_pixel(x, y, adjusted_pixel);
     }
 
@@ -347,7 +370,7 @@ fn adjust_saturation(
     let rgb = ColorTransformRgb::from(pixel[0] as f32, pixel[1] as f32, pixel[2] as f32);
     let hsl = rgb.to_hsl();
     println!("HSL: {:?}", hsl.get_saturation());
-    let adjusted_hsl = Hsl::from(hsl.get_hue(), hsl.get_saturation() + saturation_factor, hsl.get_lightness());
+    let adjusted_hsl = Hsl::from(hsl.get_hue(), hsl.get_saturation() * saturation_factor, hsl.get_lightness());
     //     h: hsl.h,
     //     s: (hsl.s * saturation_factor).clamp(0.0, 1.0), // Adjust saturation
     //     l: hsl.l,
@@ -357,5 +380,210 @@ fn adjust_saturation(
         adjusted_rgb.get_red() as u8,
         adjusted_rgb.get_green() as u8,
         adjusted_rgb.get_blue() as u8,
+    ])
+}
+
+#[wasm_bindgen]
+pub fn adjust_exposure_image(image_data: &[u8], exposure: f64) -> Vec<u8> {
+    let image = image::load_from_memory(image_data).expect("Failed to open the file");
+    let rgb_image = image.to_rgb8();
+    let (width, height) = rgb_image.dimensions();
+    let mut adjusted_image: ImageBuffer<Rgb<u8>, Vec<u8>> = ImageBuffer::new(width, height);
+
+    let exposure_value: f64;
+
+    if exposure > 0.0 {
+        if exposure > 6.0 {
+            exposure_value = 20.0;
+        } else {
+            exposure_value = (exposure * 3.0) + 3.0;
+        }
+    } else if exposure == 0.0 {
+        exposure_value = 0.0;
+    } else {
+        if exposure == -6.0 || exposure < -6.0 {
+            exposure_value = -20.0;
+        } else {
+            exposure_value = (exposure * 3.0) + 3.0;
+        }
+    }
+
+    for (x, y, pixel) in rgb_image.enumerate_pixels() {
+        let adjusted_pixel = adjust_exposure(*pixel, exposure_value);
+        adjusted_image.put_pixel(x, y, adjusted_pixel);
+    }
+
+    let mut buf = Cursor::new(Vec::new());
+    adjusted_image.write_to(&mut buf, image::ImageFormat::Png).expect("Failed to write the image");
+    buf.into_inner()
+}
+
+fn adjust_exposure(
+    pixel: Rgb<u8>,
+    exposure_factor: f64,
+) -> Rgb<u8> {
+    let lab = rgb_to_lab(pixel);
+    let new_lab = [
+        (lab[0] + exposure_factor).clamp(0.0, 100.0), // Lightness channel
+        lab[1], 
+        lab[2], 
+    ];
+    let new_rgb = lab_to_rgb(new_lab);
+    Rgb([
+        new_rgb[0] as u8,
+        new_rgb[1] as u8,
+        new_rgb[2] as u8,
+    ])
+}
+
+#[wasm_bindgen]
+pub fn adjust_contrasts_image(image_data: &[u8], contrasts: f32) -> Vec<u8> {
+    let image = image::load_from_memory(image_data).expect("Failed to open the file");
+    let rgb_image = image.to_rgb8();
+    let (width, height) = rgb_image.dimensions();
+    let mut adjusted_image: ImageBuffer<Rgb<u8>, Vec<u8>> = ImageBuffer::new(width, height);
+
+    let contrasts_value: f32;
+
+    if contrasts > 0.0 {
+        if contrasts > 6.0 {
+            contrasts_value = (6.0 + 6.0) / 6.0;
+        } else {
+            contrasts_value = (contrasts + 6.0) / 6.0;
+        }
+    } else if contrasts == 0.0 {
+        contrasts_value = 1.0;
+    } else {
+        if contrasts < -6.0 {
+            contrasts_value = (12.0 + (-6.0)) / 12.0;
+        } else {
+            contrasts_value = (12.0 + contrasts) / 12.0;
+        }
+    }
+
+    for (x, y, pixel) in rgb_image.enumerate_pixels() {
+        let adjusted_pixel = adjust_contrast(*pixel, contrasts_value);
+        adjusted_image.put_pixel(x, y, adjusted_pixel);
+    }
+
+    let mut buf = Cursor::new(Vec::new());
+    adjusted_image.write_to(&mut buf, image::ImageFormat::Png).expect("Failed to write the image");
+    buf.into_inner()
+}
+
+fn adjust_contrast(pixel: Rgb<u8>, contrast_factor: f32) -> Rgb<u8> {
+    let r = pixel[0] as f32;
+    let g = pixel[1] as f32;
+    let b = pixel[2] as f32;
+    
+    // Apply contrast adjustment: new_value = (old_value - 128) * factor + 128
+    // 128 is the middle gray point (0.5 * 255)
+    let adjusted_r = ((r - 128.0) * contrast_factor + 128.0).clamp(0.0, 255.0);
+    let adjusted_g = ((g - 128.0) * contrast_factor + 128.0).clamp(0.0, 255.0);
+    let adjusted_b = ((b - 128.0) * contrast_factor + 128.0).clamp(0.0, 255.0);
+    Rgb([
+        adjusted_r as u8,
+        adjusted_g as u8,
+        adjusted_b as u8,
+    ])
+}
+
+#[wasm_bindgen]
+pub fn adjust_temperature_image(image_data: &[u8], temperature: f64) -> Vec<u8> {
+    let image = image::load_from_memory(image_data).expect("Failed to open the file");
+    let rgb_image = image.to_rgb8();
+    let (width, height) = rgb_image.dimensions();
+    let mut adjusted_image: ImageBuffer<Rgb<u8>, Vec<u8>> = ImageBuffer::new(width, height);
+
+    let temperature_value: f64;
+
+    if temperature > 0.0 {
+        if temperature > 6.0 {
+            temperature_value = 18.0;
+        } else {
+            temperature_value = (temperature * 2.0) + temperature;
+        }
+    } else if temperature == 0.0 {
+        temperature_value = 0.0;
+    } else {
+        if temperature < -6.0 {
+            temperature_value = -18.0;
+        } else {
+            temperature_value = (temperature * 2.0) + temperature;
+        }
+    }
+
+    for (x, y, pixel) in rgb_image.enumerate_pixels() {
+        let adjusted_pixel = adjust_temperature(*pixel, temperature_value);
+        adjusted_image.put_pixel(x, y, adjusted_pixel);
+    }
+
+    let mut buf = Cursor::new(Vec::new());
+    adjusted_image.write_to(&mut buf, image::ImageFormat::Png).expect("Failed to write the image");
+    buf.into_inner()
+}
+
+fn adjust_temperature(
+    pixel: Rgb<u8>,
+    temperature_factor: f64,
+) -> Rgb<u8> {
+    let lab = rgb_to_lab(pixel);
+    let mut adjusted_lab = lab;
+    adjusted_lab[2] += temperature_factor * 1.5; // Adjust the blue-yellow axis
+    let new_rgb = lab_to_rgb(adjusted_lab);
+    Rgb([
+        new_rgb[0] as u8,
+        new_rgb[1] as u8,
+        new_rgb[2] as u8,
+    ])
+}
+
+#[wasm_bindgen]
+pub fn adjust_tint_image(image_data: &[u8], tint: f64) -> Vec<u8> {
+    let image = image::load_from_memory(image_data).expect("Failed to open the file");
+    let rgb_image = image.to_rgb8();
+    let (width, height) = rgb_image.dimensions();
+    let mut adjusted_image: ImageBuffer<Rgb<u8>, Vec<u8>> = ImageBuffer::new(width, height);
+
+    let tint_value: f64;
+
+    if tint > 0.0 {
+        if tint > 6.0 {
+            tint_value = 18.0;
+        } else {
+            tint_value = (tint * 2.0) + tint;
+        }
+    } else if tint == 0.0 {
+        tint_value = 0.0;
+    } else {
+        if tint < -6.0 {
+            tint_value = -18.0;
+        } else {
+            tint_value = (tint * 2.0) + tint;
+        }
+    }
+
+    for (x, y, pixel) in rgb_image.enumerate_pixels() {
+        let adjusted_pixel = adjust_tint(*pixel, tint_value);
+        adjusted_image.put_pixel(x, y, adjusted_pixel);
+    }
+
+    let mut buf = Cursor::new(Vec::new());
+    adjusted_image.write_to(&mut buf, image::ImageFormat::Png).expect("Failed to write the image");
+    buf.into_inner()
+}
+
+fn adjust_tint(
+    pixel: Rgb<u8>,
+    tint_factor: f64,
+) -> Rgb<u8> {
+    let lab = rgb_to_lab(pixel);
+    let mut adjusted_lab = lab;
+    adjusted_lab[1] += tint_factor * 1.5; // Adjust the blue-yellow axis
+    let new_rgb = lab_to_rgb(adjusted_lab);
+    Rgb([
+        new_rgb[0] as u8,
+        new_rgb[1] as u8,
+        new_rgb[2] as u8,
     ])
 }

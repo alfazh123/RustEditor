@@ -11,6 +11,8 @@ use image_size::{get_size_handler};
 use color::{adjust_temperature_handler, adjust_tint_handler, adjust_saturation_handler};
 use light::{adjust_exposure_handler, adjust_contrasts_handler};
 
+use crate::color::adjust_color_handler;
+
 #[wasm_bindgen]
 pub fn get_size(image_data: &[u8]) -> Vec<u32> {
     get_size_handler(image_data)
@@ -94,4 +96,9 @@ pub fn adjust_exposure_image(image_data: &[u8], exposure: f64) -> Vec<u8> {
 #[wasm_bindgen]
 pub fn adjust_contrasts_image(image_data: &[u8], contrasts: f32) -> Vec<u8> {
     adjust_contrasts_handler(image_data, contrasts)
+}
+
+#[wasm_bindgen]
+pub fn adjust_color_image(image_data: &[u8], saturation: f64, temperature: f64, tint: f64) -> Vec<u8> {
+    adjust_color_handler(image_data, saturation, temperature, tint)
 }

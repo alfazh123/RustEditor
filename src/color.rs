@@ -1,6 +1,5 @@
-use std::io::Cursor;
+use std::{io::Cursor};
 use image::{ImageBuffer, Rgb};
-use colors_transform::{Rgb as ColorTransformRgb, Hsl, Color}; // Import trait ColorTransform
 use crate::lab_converter::{lab_to_rgb, rgb_to_lab};
 
 pub fn adjust_temperature_handler(image_data: &[u8], temperature: f64) -> Vec<u8> {
@@ -139,18 +138,95 @@ fn adjust_saturation(
     pixel: Rgb<u8>,
     saturation_factor: f32,
 ) -> Rgb<u8> {
-    let rgb = ColorTransformRgb::from(pixel[0] as f32, pixel[1] as f32, pixel[2] as f32);
-    let hsl = rgb.to_hsl();
-    println!("HSL: {:?}", hsl.get_saturation());
-    let adjusted_hsl = Hsl::from(hsl.get_hue(), hsl.get_saturation() * saturation_factor, hsl.get_lightness());
-    //     h: hsl.h,
-    //     s: (hsl.s * saturation_factor).clamp(0.0, 1.0), // Adjust saturation
-    //     l: hsl.l,
-    // };
-    let adjusted_rgb = adjusted_hsl.to_rgb();
+    // Convert to LAB for more accurate saturation adjustment
+    let lab = rgb_to_lab(pixel);
+    let mut adjusted_lab = lab;
+    
+    // Apply saturation by scaling chroma (distance from gray axis)
+    if saturation_factor != 1.0 {
+        adjusted_lab[1] *= saturation_factor as f64;
+        adjusted_lab[2] *= saturation_factor as f64;
+    }
+    
+    let new_rgb = lab_to_rgb(adjusted_lab);
     Rgb([
-        adjusted_rgb.get_red() as u8,
-        adjusted_rgb.get_green() as u8,
-        adjusted_rgb.get_blue() as u8,
+        new_rgb[0],
+        new_rgb[1],
+        new_rgb[2],
+    ])
+}
+
+pub fn adjust_color_handler(image_data: &[u8], saturation_value: f64, temperature_value: f64, tint_value: f64) -> Vec<u8> {
+    let image = image::load_from_memory(image_data).expect("Failed to open the file");
+    let rgb_image = image.to_rgb8();
+    let (width, height) = rgb_image.dimensions();
+    let mut adjusted_image: ImageBuffer<Rgb<u8>, Vec<u8>> = ImageBuffer::new(width, height);
+
+    let saturation: f64 = match saturation_value {
+        s if s > 6.0 => 2.0, 
+        s if s > 0.0 => 1.0 + (s / 6.0),
+        0.0 => 1.0,
+        s if s < -6.0 => 0.0,
+        s if s < 0.0 => (s + 6.0) / 6.0,
+        _ => unreachable!(), 
+    };
+
+    let tint: f64 = match tint_value {
+        t if t > 6.0 => 18.0,
+        t if t > 0.0 => t * 3.0, 
+        0.0 => 0.0,
+        t if t < -6.0 => -18.0,
+        t if t < 0.0 => t * 3.0, 
+        _ => unreachable!(),
+    };
+
+    let temperature: f64 = match temperature_value {
+        t if t > 6.0 => 18.0,
+        t if t > 0.0 => t * 3.0, 
+        0.0 => 0.0,
+        t if t < -6.0 => -18.0,
+        t if t < 0.0 => t * 3.0, 
+        _ => unreachable!(),
+    };
+
+    for (x, y, pixel) in rgb_image.enumerate_pixels() {
+        let adjusted_pixel = adjust_color(*pixel, saturation, temperature, tint);
+        adjusted_image.put_pixel(x, y, adjusted_pixel);
+    }
+
+    let mut buf = Cursor::new(Vec::new());
+    adjusted_image.write_to(&mut buf, image::ImageFormat::Png).expect("Failed to write the image");
+    buf.into_inner()
+}
+
+fn adjust_color(
+    pixel: Rgb<u8>,
+    saturation: f64,
+    temperature: f64,
+    tint: f64
+) -> Rgb<u8> {
+    // Single RGB->LAB conversion
+    let lab = rgb_to_lab(pixel);
+    let mut adjusted_lab = lab;
+    
+    // Apply temperature and tint directly in LAB space
+    adjusted_lab[1] += tint * 1.5;      
+    adjusted_lab[2] += temperature * 1.5; 
+    
+    if saturation != 1.0 {
+        let original_chroma = (adjusted_lab[1].powi(2) + adjusted_lab[2].powi(2)).sqrt();
+        if original_chroma > 0.0 {
+            let saturation_factor = saturation;
+            adjusted_lab[1] *= saturation_factor;
+            adjusted_lab[2] *= saturation_factor;
+        }
+    }
+    
+    // Single LAB->RGB conversion
+    let new_rgb = lab_to_rgb(adjusted_lab);
+    Rgb([
+        new_rgb[0],
+        new_rgb[1], 
+        new_rgb[2],
     ])
 }

@@ -46,13 +46,8 @@ pub fn sharpen(image_data: &[u8], radius: f32) -> Vec<u8> {
 pub fn fix_size_image(image_data: &[u8]) -> Vec<u8> {
     let image = image::load_from_memory(image_data).expect("Failed to open the file");
     let (width, height) = image.dimensions();
-    if width > 1267 {
-        let resize_image = image.resize(1267, height, image::imageops::FilterType::Lanczos3);
-        let mut buf = Cursor::new(Vec::new());
-        resize_image.write_to(&mut buf, image::ImageFormat::Png).expect("Failed to write the image");
-        buf.into_inner()
-    } else if height > 1267 {
-        let resize_image = image.resize(width, 1267, image::imageops::FilterType::Lanczos3);
+    if width > 1267 || height > 1267 {
+        let resize_image = image.resize(1267, 1267, image::imageops::FilterType::Lanczos3);
         let mut buf = Cursor::new(Vec::new());
         resize_image.write_to(&mut buf, image::ImageFormat::Png).expect("Failed to write the image");
         buf.into_inner()

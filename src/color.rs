@@ -1,6 +1,7 @@
 use std::{io::Cursor};
 use image::{ImageBuffer, Rgb};
 use crate::lab_converter::{lab_to_rgb, rgb_to_lab};
+// use colors_transform::{Rgb as ColorTransformRgb, Hsl, Color}; // Import trait ColorTransform
 
 pub fn adjust_temperature_handler(image_data: &[u8], temperature: f64) -> Vec<u8> {
     let image = image::load_from_memory(image_data).expect("Failed to open the file");
@@ -12,17 +13,21 @@ pub fn adjust_temperature_handler(image_data: &[u8], temperature: f64) -> Vec<u8
 
     if temperature > 0.0 {
         if temperature > 6.0 {
-            temperature_value = 18.0;
+            // temperature_value = 18.0;
+            temperature_value = 100.0;
         } else {
-            temperature_value = (temperature * 2.0) + temperature;
+            // temperature_value = (temperature * 2.0) + temperature;
+            temperature_value = temperature / 6.0 * 100.0;
         }
     } else if temperature == 0.0 {
         temperature_value = 0.0;
     } else {
         if temperature < -6.0 {
-            temperature_value = -18.0;
+            // temperature_value = -18.0;
+            temperature_value = -100.0;
         } else {
-            temperature_value = (temperature * 2.0) + temperature;
+            // temperature_value = (temperature * 2.0) + temperature;
+            temperature_value = temperature / 6.0 * 100.0 * -1.0;
         }
     }
 
@@ -40,14 +45,22 @@ fn adjust_temperature(
     pixel: Rgb<u8>,
     temperature_factor: f64,
 ) -> Rgb<u8> {
-    let lab = rgb_to_lab(pixel);
-    let mut adjusted_lab = lab;
-    adjusted_lab[2] += temperature_factor * 1.5; // Adjust the blue-yellow axis
-    let new_rgb = lab_to_rgb(adjusted_lab);
+    // let lab = rgb_to_lab(pixel);
+    // let mut adjusted_lab = [lab[0], lab[1], lab[2]];
+    // adjusted_lab[2] += temperature_factor * 1.5; // Adjust the blue-yellow axis
+    // let new_rgb = lab_to_rgb(adjusted_lab);
+    // Rgb([
+    //     new_rgb[0] as u8,
+    //     new_rgb[1] as u8,
+    //     new_rgb[2] as u8,
+    // ])
+    let r = pixel.0[0] as f64 + temperature_factor;
+    let g = pixel.0[1] as f64;
+    let b = pixel.0[2] as f64 - temperature_factor;
     Rgb([
-        new_rgb[0] as u8,
-        new_rgb[1] as u8,
-        new_rgb[2] as u8,
+        r.clamp(0.0, 255.0) as u8,
+        g.clamp(0.0, 255.0) as u8,
+        b.clamp(0.0, 255.0) as u8,
     ])
 }
 
@@ -61,17 +74,21 @@ pub fn adjust_tint_handler(image_data: &[u8], tint: f64) -> Vec<u8> {
 
     if tint > 0.0 {
         if tint > 6.0 {
-            tint_value = 18.0;
+            // tint_value = 18.0;
+            tint_value = 100.0;
         } else {
-            tint_value = (tint * 2.0) + tint;
+            // tint_value = (tint * 2.0) + tint;
+            tint_value = tint / 6.0 * 100.0;
         }
     } else if tint == 0.0 {
         tint_value = 0.0;
     } else {
         if tint < -6.0 {
-            tint_value = -18.0;
+            // tint_value = -18.0;
+            tint_value = -100.0;
         } else {
-            tint_value = (tint * 2.0) + tint;
+            // tint_value = (tint * 2.0) + tint;
+            tint_value = tint / 6.0 * 100.0 * -1.0;
         }
     }
 
@@ -89,14 +106,22 @@ fn adjust_tint(
     pixel: Rgb<u8>,
     tint_factor: f64,
 ) -> Rgb<u8> {
-    let lab = rgb_to_lab(pixel);
-    let mut adjusted_lab = lab;
-    adjusted_lab[1] += tint_factor * 1.5; // Adjust the blue-yellow axis
-    let new_rgb = lab_to_rgb(adjusted_lab);
+    // let lab = rgb_to_lab(pixel);
+    // let mut adjusted_lab = lab;
+    // adjusted_lab[1] += tint_factor * 1.5; // Adjust the blue-yellow axis
+    // let new_rgb = lab_to_rgb(adjusted_lab);
+    // Rgb([
+    //     new_rgb[0] as u8,
+    //     new_rgb[1] as u8,
+    //     new_rgb[2] as u8,
+    // ])
+    let r = pixel.0[0] as f64;
+    let g = pixel.0[1] as f64 + tint_factor;
+    let b = pixel.0[2] as f64;
     Rgb([
-        new_rgb[0] as u8,
-        new_rgb[1] as u8,
-        new_rgb[2] as u8,
+        r.clamp(0.0, 255.0) as u8,
+        g.clamp(0.0, 255.0) as u8,
+        b.clamp(0.0, 255.0) as u8,
     ])
 }
 
@@ -139,20 +164,32 @@ fn adjust_saturation(
     saturation_factor: f32,
 ) -> Rgb<u8> {
     // Convert to LAB for more accurate saturation adjustment
-    let lab = rgb_to_lab(pixel);
-    let mut adjusted_lab = lab;
+    let r = pixel.0[0] as f32;
+    let g = pixel.0[1] as f32;
+    let b = pixel.0[2] as f32;
     
-    // Apply saturation by scaling chroma (distance from gray axis)
-    if saturation_factor != 1.0 {
-        adjusted_lab[1] *= saturation_factor as f64;
-        adjusted_lab[2] *= saturation_factor as f64;
-    }
+    // Calculate grayscale using fast luminance approximation
+    let gray = r * 0.299 + g * 0.587 + b * 0.114;
     
-    let new_rgb = lab_to_rgb(adjusted_lab);
+    // Linear interpolation between gray and original color
+    let new_r = gray + (r - gray) * saturation_factor;
+    let new_g = gray + (g - gray) * saturation_factor;
+    let new_b = gray + (b - gray) * saturation_factor;
+    
+    let adjusted_pixel = Rgb([
+        new_r.clamp(0.0, 255.0) as u8,
+        new_g.clamp(0.0, 255.0) as u8,
+        new_b.clamp(0.0, 255.0) as u8,
+    ]);
+
+    // let new_rgb = lab_to_rgb(adjusted_lab);
     Rgb([
-        new_rgb[0],
-        new_rgb[1],
-        new_rgb[2],
+        // new_rgb[0],
+        // new_rgb[1],
+        // new_rgb[2],
+        adjusted_pixel[0],
+        adjusted_pixel[1],
+        adjusted_pixel[2],
     ])
 }
 

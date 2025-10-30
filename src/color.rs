@@ -13,21 +13,21 @@ pub fn adjust_temperature_handler(image_data: &[u8], temperature: f64) -> Vec<u8
 
     if temperature > 0.0 {
         if temperature > 6.0 {
-            // temperature_value = 18.0;
-            temperature_value = 100.0;
+            temperature_value = 24.0;
+            // temperature_value = 100.0;
         } else {
-            // temperature_value = (temperature * 2.0) + temperature;
-            temperature_value = temperature / 6.0 * 100.0;
+            temperature_value = temperature * 4.0;
+            // temperature_value = temperature / 6.0 * 100.0;
         }
     } else if temperature == 0.0 {
         temperature_value = 0.0;
     } else {
         if temperature < -6.0 {
-            // temperature_value = -18.0;
-            temperature_value = -100.0;
+            temperature_value = -24.0;
+            // temperature_value = -100.0;
         } else {
-            // temperature_value = (temperature * 2.0) + temperature;
-            temperature_value = temperature / 6.0 * 100.0 * -1.0;
+            temperature_value = temperature * 4.0;
+            // temperature_value = temperature / 6.0 * 100.0;
         }
     }
 
@@ -54,13 +54,23 @@ fn adjust_temperature(
     //     new_rgb[1] as u8,
     //     new_rgb[2] as u8,
     // ])
-    let r = pixel.0[0] as f64 + temperature_factor;
+    let r = pixel.0[0] as f64;
     let g = pixel.0[1] as f64;
-    let b = pixel.0[2] as f64 - temperature_factor;
-    Rgb([
-        r.clamp(0.0, 255.0) as u8,
+    let b = pixel.0[2] as f64;
+
+    let new_r = r + temperature_factor;
+    let new_b = b - temperature_factor;
+
+    let adjusted_rgb = Rgb([
+        new_r.clamp(0.0, 255.0) as u8,
         g.clamp(0.0, 255.0) as u8,
-        b.clamp(0.0, 255.0) as u8,
+        new_b.clamp(0.0, 255.0) as u8,
+    ]);
+
+    Rgb([
+        adjusted_rgb[0],
+        adjusted_rgb[1],
+        adjusted_rgb[2],
     ])
 }
 
@@ -74,21 +84,21 @@ pub fn adjust_tint_handler(image_data: &[u8], tint: f64) -> Vec<u8> {
 
     if tint > 0.0 {
         if tint > 6.0 {
-            // tint_value = 18.0;
-            tint_value = 100.0;
+            tint_value = 24.0;
+            // tint_value = 100.0;
         } else {
-            // tint_value = (tint * 2.0) + tint;
-            tint_value = tint / 6.0 * 100.0;
+            tint_value = tint * 4.0;
+            // tint_value = tint / 6.0 * 100.0;
         }
     } else if tint == 0.0 {
         tint_value = 0.0;
     } else {
         if tint < -6.0 {
-            // tint_value = -18.0;
-            tint_value = -100.0;
+            tint_value = -24.0;
+            // tint_value = -100.0;
         } else {
-            // tint_value = (tint * 2.0) + tint;
-            tint_value = tint / 6.0 * 100.0 * -1.0;
+            tint_value = tint * 4.0;
+            // tint_value = tint / 6.0 * 100.0;
         }
     }
 
@@ -116,12 +126,21 @@ fn adjust_tint(
     //     new_rgb[2] as u8,
     // ])
     let r = pixel.0[0] as f64;
-    let g = pixel.0[1] as f64 + tint_factor;
+    let g = pixel.0[1] as f64;
     let b = pixel.0[2] as f64;
-    Rgb([
+
+    let new_g = g + tint_factor;
+
+    let adjusted_rgb = Rgb([
         r.clamp(0.0, 255.0) as u8,
-        g.clamp(0.0, 255.0) as u8,
+        new_g.clamp(0.0, 255.0) as u8,
         b.clamp(0.0, 255.0) as u8,
+    ]);
+
+    Rgb([
+        adjusted_rgb[0],
+        adjusted_rgb[1],
+        adjusted_rgb[2],
     ])
 }
 

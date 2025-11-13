@@ -59,6 +59,22 @@ pub fn fix_size_image(image_data: &[u8]) -> Vec<u8> {
 }
 
 #[wasm_bindgen]
+pub fn extend_size_image(image_data: &[u8], size_type: String) -> Vec<u8> {
+    let image = image::load_from_memory(image_data).expect("Failed to open the file");
+    if size_type == "FHD" {
+        let resize_image = image.resize(1920, 1080, image::imageops::FilterType::Lanczos3);
+        let mut buf = Cursor::new(Vec::new());
+        resize_image.write_to(&mut buf, image::ImageFormat::Png).expect("Failed to write the image");
+        buf.into_inner()
+    } else {
+        let resize_image = image.resize(3840, 2160, image::imageops::FilterType::Lanczos3);
+        let mut buf = Cursor::new(Vec::new());
+        resize_image.write_to(&mut buf, image::ImageFormat::Png).expect("Failed to write the image");
+        buf.into_inner()
+    }
+}
+
+#[wasm_bindgen]
 pub fn grayscale_image(image_data: &[u8]) -> Vec<u8> {
     let image = image::load_from_memory(image_data).expect("Failed to open the file");
     let gray_image = image.to_luma8();

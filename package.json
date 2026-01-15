@@ -1,0 +1,26 @@
+{
+  "name": "rusteditor",
+  "version": "1.0.0",
+  "description": "documentation of rusteditor package",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alfazh123/RustEditor.git"
+  },
+  "keywords": [
+    "rust",
+    "wasm",
+    "documentation"
+  ],
+  "author": "alfazh",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/alfazh123/RustEditor/issues"
+  },
+  "homepage": "https://github.com/alfazh123/RustEditor#readme",
+  "devDependencies": {
+    "parcel": "^2.16.3"
+  }
+}

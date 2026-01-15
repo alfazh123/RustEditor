@@ -1,0 +1,106 @@
+:root {
+  font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+[id^="content-"] {
+  display: none;
+}
+
+body:has(#input-tc:checked) #content-tc,
+body:has(#input-sharp:checked) #content-sharp,
+body:has(#input-color:checked) #content-color,
+body:has(#input-light:checked) #content-light {
+  display: block !important;
+}
+
+#input-tc:checked + label,
+#input-sharp:checked + label,
+#input-color:checked + label,
+#input-light:checked + label {
+    /* background-color: #dfdfdf; */
+    text-decoration: underline;
+    font-weight: bold;
+}
+
+body:has(#input-tc:checked) .container {
+  align-items: start;
+}
+
+#tab-list {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+}
+
+[id^="input"] {
+  display: none;
+}
+
+/* [id^="image"] {
+    width: 100px;
+    height: 100px;
+} */
+
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  align-items: center;
+  justify-content: center;
+}
+
+.container {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  align-items: center;
+}
+
+.container-child {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.label-func {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.label-image {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-items: center;
+}
+
+img {
+  max-width: 80%;
+  max-height: 50%;
+  height: 100%;
+  padding: 2px;
+  border-radius: 10px;
+}
+
+.custom-slider {
+  -webkit-appearance: none; /* For WebKit/Blink browsers */
+  appearance: none;
+  width: 100%; /* Full-width */
+  background: #dfdfdf; /* Makes the track background transparent */
+  border-radius: 50px;
+}
+
+.custom-slider:focus {
+  outline: none; /* Remove outline on focus, adjust as needed */
+}
+

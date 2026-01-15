@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation Rust Editor</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="module" src="main.js"></script>
+</head>
+<body>
+    <main>
+        <div id="tab-list">
+            <input type="radio" name="tabs" id="input-tc" checked>
+            <label class="tab" for="input-tc">Transfer Color</label>
+            <input type="radio" name="tabs" id="input-sharp">
+            <label class="tab" for="input-sharp">Sharp</label>
+            <input type="radio" name="tabs" id="input-color">
+            <label class="tab" for="input-color">Color</label>
+            <input type="radio" name="tabs" id="input-light">
+            <label class="tab" for="input-light">Light</label>
+        </div>
+    
+        <input type="file" id="input-target" accept="image/*">
+        <input type="file" id="input-ref" accept="image/*">
+        
+        <div class="container">
+            <label for="input-target" class="label-image">
+                <span>Target Image</span>
+                <img src="assets/input.svg" alt="image-target" id="target-element">
+            </label>
+            <div id="content-tc">
+                <div class="container-child">
+                    <label for="input-ref" class="label-image">
+                        <span>Ref Image</span>
+                        <img src="assets/input.svg" alt="image-target" id="ref-element">
+                    </label>
+                    <button id="transfer-button">Transfer Color</button>
+                </div>
+            </div>
+            <div id="content-sharp">
+                <label for="sharp-adj" class="label-func">Sharp</label>
+                <input class="custom-slider" type="range" name="sharp-adj" id="sharp-adj" min="0" max="10" value="0">
+                <!-- <input type="number" name="sharp-adj" id="sharp-adj"> -->
+            </div>
+            <div id="content-color">
+                <div class="container-child">
+                    <label class="label-func" for="saturation-adj">Saturation</label>
+                    <input class="custom-slider" type="range" name="saturation-adj" id="saturation-adj"  min="-6" max="6" value="0">
+                    <label class="label-func" for="temperature-adj">Temperature</label>
+                    <input class="custom-slider" type="range" name="temperature-adj" id="temperature-adj" min="-6" max="6" value="0">
+                    <label class="label-func" for="tint-adj">Tint</label>
+                    <input class="custom-slider" type="range" name="tint-adj" id="tint-adj" min="-6" max="6" value="0">
+                </div>
+            </div>
+            <div id="content-light">
+                <div class="container-child">
+                    <label class="label-func" for="contrast-adj">Contrast</label>
+                    <input class="custom-slider" type="range" name="contrast-adj" id="contrast-adj" min="-6" max="6" value="0">
+                    <label class="label-func" for="exposure-adj">Exposure</label>
+                    <input class="custom-slider" type="range" name="exposure-adj" id="exposure-adj" min="-6" max="6" value="0">
+                </div>
+            </div>
+            <label for="input-ref" class="label-image">
+                <span>Result Image</span>
+                <img src="assets/result.svg" alt="image-target" id="res-element" class="label-image">
+            </label>
+        </div>
+    </main>
+    <!-- <div id="edit-section">
+    </div> -->
+</body>
+</html>

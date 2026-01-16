@@ -1,5 +1,5 @@
 /target
 
-/node_modules
-/.parcel-cache
-/dist
+/site/node_modules
+/site/.parcel-cache
+/site/dist

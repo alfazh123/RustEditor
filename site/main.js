@@ -1,4 +1,4 @@
-import init, { adjust_contrasts_image, adjust_exposure_image, adjust_saturation_image, adjust_temperature_image, adjust_tint_image, sharpen, switch_color } from './pkg/rust_editor';
+import init, { adjust_contrasts_image, adjust_exposure_image, adjust_saturation_image, adjust_temperature_image, adjust_tint_image, sharpen, switch_color } from '../pkg/rust_editor';
 
 init().then(() => {
     console.log('initiation wasm success');

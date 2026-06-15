@@ -61,4 +61,3 @@ sharpRange.addEventListener("input", async function(e) {
 ## Example 
 
 As example of this package usage you can look at this link [example](https://github.com/alfazh123/RustEditor/tree/main/site/main.js), or this link [image-editor](https://alfazh123.github.io/image-editor/).
-

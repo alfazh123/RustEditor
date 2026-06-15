@@ -1,10 +1,11 @@
 [package]
 name = "rust-editor"
-version = "0.3.6"
+version = "0.3.7"
 edition = "2021"
 repository = "https://github.com/alfazh123/RustEditor"
 license = "MIT"
 description = "A WebAssembly image processing built by Rust Langguage"
+keywords = ["WebAssembly","Rust", "Image Processing"]
 
 [lib]
 crate-type = ["cdylib"]

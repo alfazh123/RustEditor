@@ -9,58 +9,55 @@ This package is provide several image processing algorithm such as:
 3. Color Adjustment: Fine-tune Saturation, Temperature, adn Tint of Image Target.
 4. Light Adjustment: Contrast and Exposure Adjustments.
 
-## Build WASM package
+## Usage
 
-Before building the package, you must first install `wasm-pack`.
+First calling function from package.
 
-```bash
-cargo install wasm-pack
+```ts
+import init, { switch_color, sharpen } from 'rust-editor';
+
+function switchColorTheme(imgTarget: Uint8Array, imgReference: Uint8Array): Uint8Array {
+    try {
+		const result = switch_color(imgT, imgR);
+		return result;
+	} catch (error) {
+		console.error("Error getting image dimensions:", error);
+		return new Uint8Array();
+	}
+}
+
+function sharpImage(img: Uint8Array, radius: number): Uint8Array {
+    try {
+        const result = sharpen(img, radius);
+        return result;
+    } catch {
+        console.error("Error sharp image:", error);
+		return new Uint8Array();
+    }
+}
 ```
 
-Then you can clone this repository and build package with running command bellow.
+then use that function to event listener in your component like code bellow.
 
-```bash
-wasm-pack build --target web
+```js
+transferBtn.addEventListener("click", async function() {
+    try {
+        if (currentImage === null || referenceImage === null) {
+            alert("input reference image first");
+            return;
+        }
+
+        const switchImage = switch_color(currentImage, referenceImage)
+        showImage(switchImage)
+    } catch (e) {
+        console.log("message", e);
+    }
+})
+
+sharpRange.addEventListener("input", async function(e) {
+    executeFunc("sharp", e.target.value);
+})
 ```
+## Example 
 
-```
-.
-└── RustEditor/
-    ├── pkg/      <--------------------build result
-    │   ├── package.json
-    │   ├── README.md
-    │   ├── rust_editor_bg.wasm
-    │   ├── rust_editor_bg.wasm.d.ts
-    │   └── rust_editor.d.ts
-    ├── site/
-    │   ├── index.html
-    │   ├── main.js
-    │   ├── style.css
-    │   ├── assets/
-    │   ├── README.md
-    │   └── package.json
-    ├── src/
-    │   ├── color.rs
-    │   ├── image_size.rs
-    │   ├── lab_converter.rs
-    │   ├── lib.rs
-    │   ├── light.rs
-    │   └── switch_color.rs
-    ├── .gitignore
-    ├── Cargo.lock
-    ├── Cargo.toml
-    └── LICENSE
-```
-
-Then look in your project directory you must find new directory with folder name `pkg`, on that folder you'll find some file like js, ts, and wasm file. file `.wasm` is result of compile Rust code using `wasm-pack`, file `.js` and `.ts` is bridge for frontEnd can comunicate with `.wasm` file.
-
-you can look published this documentation on this [link](https://www.npmjs.com/package/rust-editor)
-
-## Demo
-This documentation is also provide demo, so you can try how to use and how the application work. You can jump to `/site` directory foolow command bellow.
-
-```bash
-cd side
-npm install // install all depencencies
-npx parcel index.html // run project using parceljs
-```
+As example of this package usage you can look at this link [example](https://github.com/alfazh123/RustEditor/tree/main/site/main.js), or this link [image-editor](https://alfazh123.github.io/image-editor/).

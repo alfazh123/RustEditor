@@ -1,9 +1,13 @@
-name: Publish to npm
+name: Publish to npm (OIDC)
 
 on:
   push:
     tags:
       - 'v*.*.*'
+
+permissions:
+  id-token: write  # OIDC token
+  contents: read
 
 jobs:
   publish:
@@ -27,21 +31,18 @@ jobs:
           targets: wasm32-unknown-unknown
 
       - name: Install wasm-pack
-        run: curl https://wasm-bindgen.github.io/wasm-pack/installer/init.sh -sSf | sh
+        run: curl https://rustwasm.org/wasm-pack/installer/init.sh -sSf | sh
 
       - name: Build WASM package
         run: wasm-pack build --target web
 
-      - name: Package npm module
-        run: wasm-pack pack
-
-      - name: Setup Node.js
+      - name: Setup Node.js with OIDC
         uses: actions/setup-node@v3
         with:
           node-version: '18'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Publish to npm
-        run: wasm-pack publish --access public
+      - name: Publish to npm using OIDC
+        run: cd pkg && npm publish --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

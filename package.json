@@ -1,0 +1,15 @@
+{
+  "name": "rust-editor",
+  "type": "module",
+  "description": "A WebAssembly image processing built by Rust Langguage",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alfazh123/RustEditor.git"
+  },
+  "keywords": [
+    "WebAssembly",
+    "Rust",
+    "Image Processing"
+  ]
+}

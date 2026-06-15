@@ -16,9 +16,10 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Check if version exists on npm
+            - name: Check if version exists on npm
         id: check_version
         run: |
-          VERSION=$(grep '"version"' pkg/package.json | sed 's/.*"version": "\(.*\)".*/\1/')
+          VERSION=$(grep '^version' Cargo.toml | sed 's/.*"\(.*\)".*/\1/')
           if npm view rust-editor@$VERSION > /dev/null 2>&1; then
             echo "Version $VERSION already published"
             exit 1

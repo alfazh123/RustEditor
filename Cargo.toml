@@ -1,6 +1,6 @@
 [package]
 name = "rust-editor"
-version = "0.3.7"
+version = "0.3.8"
 edition = "2021"
 repository = "https://github.com/alfazh123/RustEditor"
 license = "MIT"
